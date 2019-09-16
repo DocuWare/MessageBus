@@ -20,7 +20,7 @@ You can use the Azure CLI to create the Azure Service Bus instance automated
 without checking the Azure Portal. If you do not have Azure CLI installed, 
 get it from [here](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-windows)
 
-We provide a script, which does all the neccessary steps for you. Open the script in an editor and change the parameters according to your setup.
+We provide a [script](./create-servicebus.ps1), which does all the neccessary steps for you. Open the script in an editor and change the parameters according to your setup.
 Then execute the following steps in either Powershell or Powershell Core:
 ```powershell
 az login # Only needed if you are not logged in yet
