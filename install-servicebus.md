@@ -29,7 +29,7 @@ az login # Only needed if you are not logged in yet
 The script returns both the primary and secondary connection string.
 
 ## Connect DocuWare with the Azure Service Bus
-Run the script _enable-azure-service-bus.ps1_ in Powershell or Powershell Core:
+Run the script [enable-azure-service-bus.ps1](enable-azure-service-bus.ps1) in Powershell or Powershell Core:
 ```powershell
 .\enable-azure-service-bus.ps1
 ```
