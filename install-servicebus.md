@@ -33,7 +33,7 @@ Run the script _enable-azure-service-bus.ps1_ in Powershell or Powershell Core:
 ```powershell
 .\enable-azure-service-bus.ps1
 ```
-The script requests the connection string, which you can get either from the Azure Portal or the Azure CLI. Alternatively, you can pass it as parameter to the script:
+The script requests the connection string, which you obtained either from the Azure Portal or the Azure CLI. Alternatively, you can pass it as parameter to the script:
 ```powershell
 .\enable-azure-service-bus.ps1 -connectionString "Endpoint=sb://peters-engineering-inst00.servicebus.windows.net/;SharedAccessKeyName=docuware;SharedAccessKey=..."
 ```
