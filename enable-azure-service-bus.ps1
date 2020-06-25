@@ -59,7 +59,7 @@ foreach ($file in $files) {
     # Patch the assembly binding redirects
     $runtimeElement = $xDoc.Root.Element("runtime");
     if (-not $runtimeElement) {
-        $runtimeElement = [System.Xml.Linq.XElement]::new("runtime");
+        $runtimeElement = [System.Xml.Linq.XElement]::new([System.Xml.Linq.XName]::Get("runtime"));
         $xDoc.Root.Add($runtimeElement);
     }
 
