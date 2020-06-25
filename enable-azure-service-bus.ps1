@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string] $connectionString
 )
 
@@ -90,29 +90,31 @@ foreach ($file in $files) {
 
         if (-not $match) {
             $asmPath = [System.IO.Path]::Combine($binDir, "$($dll).dll")
-            $assemblyName = [System.Reflection.Assembly]::LoadFile($asmPath).GetName();
-            $publicKeyToken = $assemblyName.GetPublicKeyToken();
-            [string] $publicKeyTokenString = "";
-            foreach ($byte in $publicKeyToken) {
-                $publicKeyTokenString += $byte.ToString("x2");
+            if (Test-Path $asmPath) {
+                $assemblyName = [System.Reflection.Assembly]::LoadFile($asmPath).GetName();
+                $publicKeyToken = $assemblyName.GetPublicKeyToken();
+                [string] $publicKeyTokenString = "";
+                foreach ($byte in $publicKeyToken) {
+                    $publicKeyTokenString += $byte.ToString("x2");
+                }
+
+                $newAbEl = [System.Xml.Linq.XElement]::new($abElementName);
+                $newAbEl.Add([System.Xml.Linq.XAttribute]::new("name", $dll));
+                $newAbEl.Add([System.Xml.Linq.XAttribute]::new("publicKeyToken", $publicKeyTokenString));
+
+                $newDaEl = [System.Xml.Linq.XElement]::new($daElementName);
+                $newDaEl.Add($newAbEl);
+
+                $version = $assemblyName.Version.ToString()
+
+                $brElement = [System.Xml.Linq.XElement]::new([System.Xml.Linq.XName]::Get("bindingRedirect", $asmNs));
+                $brElement.Add([System.Xml.Linq.XAttribute]::new("oldVersion", "0.0.0.0-255.255.255.255"));
+                $brElement.Add([System.Xml.Linq.XAttribute]::new("newVersion", $version));
+                $newDaEl.Add($brElement);
+
+                $abElement.Add($newDaEl);
+                Write-Host "Added assembly binding redirect for $dll"
             }
-
-            $newAbEl = [System.Xml.Linq.XElement]::new($abElementName);
-            $newAbEl.Add([System.Xml.Linq.XAttribute]::new("name", $dll));
-            $newAbEl.Add([System.Xml.Linq.XAttribute]::new("publicKeyToken", $publicKeyTokenString));
-
-            $newDaEl = [System.Xml.Linq.XElement]::new($daElementName);
-            $newDaEl.Add($newAbEl);
-
-            $version = $assemblyName.Version.ToString()
-
-            $brElement = [System.Xml.Linq.XElement]::new([System.Xml.Linq.XName]::Get("bindingRedirect", $asmNs));
-            $brElement.Add([System.Xml.Linq.XAttribute]::new("oldVersion", "0.0.0.0-255.255.255.255"));
-            $brElement.Add([System.Xml.Linq.XAttribute]::new("newVersion", $version));
-            $newDaEl.Add($brElement);
-
-            $abElement.Add($newDaEl);
-            Write-Host "Added assembly binding redirect for $dll"
         }
     }
 
