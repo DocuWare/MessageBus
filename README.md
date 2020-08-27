@@ -1,9 +1,6 @@
 # DocuWare Message Bus
 
-This repository contains an installation instruction to use [Azure Service Bus](https://azure.microsoft.com/en-us/services/service-bus/) in DocuWare 7.3.
+This repository contains an installation instruction to use [Azure Service Bus](https://azure.microsoft.com/en-us/services/service-bus/) in DocuWare.
 
-**Warning**
-
-**This is not supported yet**
-
-- Read the [installation instructions](./install-servicebus.md).
+- Read the [installation instructions for DocuWare 7.3](./7.3/install-servicebus.md).
+- Read the [installation instructions for DocuWare 7.2](./7.2/install-servicebus.md).
