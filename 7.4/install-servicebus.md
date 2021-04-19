@@ -3,7 +3,7 @@
 To use Azure Service Bus with DocuWare, you must configure all services to connect to an Azure Service Bus instance.
 We provide a script, which does the configuration.
 
-> *WARNING* This is the installation instruction for DocuWare 7.3. Do no apply this on other versions of DocuWare.
+> *WARNING* This is the installation instruction for DocuWare 7.4. Do no apply this on other versions of DocuWare.
 
 Please follow the steps in order to connect your DocuWare installation with Azure Service Bus:
 
