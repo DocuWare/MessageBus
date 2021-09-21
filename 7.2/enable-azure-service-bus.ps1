@@ -6,26 +6,26 @@ param(
 [Reflection.Assembly]::LoadWithPartialName("System.Xml.Linq") | Out-Null
 
 $files = @( 
-    "C:\Program Files\DocuWare\Web\Platform\web.config"
+    "C:\Program Files\DocuWare\Web\Platform\web.config",
     "C:\Program Files\DocuWare\Web\Settings\web.config",
     "C:\Program Files\DocuWare\Web\Processes\web.config",
     "C:\Program Files\DocuWare\Background Process Service\DocuWare.BackgroundProcessService.exe.config",
     "C:\Program Files\DocuWare\Background Process Service\DocuWare.BackgroundProcessService.LongLiving.GenericProcess.exe.config",
     "C:\Program Files\DocuWare\Background Process Service\DocuWare.BackgroundProcessService.LongLiving.GenericProcess.x86.exe.config",
-    "C:\Program Files (x86)\DocuWare\Authentication Server\DWAuthenticationServer.exe.config"
+    "C:\Program Files (x86)\DocuWare\Authentication Server\DWAuthenticationServer.exe.config",
     "C:\Program Files (x86)\DocuWare\Notification Server\DWNotificationServer.exe.config",
     "C:\Program Files (x86)\DocuWare\Workflow Server\DWWorkflowServer.exe.config"
 )
 
 $dlls = @(
     "Hyak.Common.dll",
-    "MessagePack.Annotations", 
-    "MessagePack", 
+    "MessagePack.Annotations",
+    "MessagePack",
     "Microsoft.Azure.Amqp",
-    "Microsoft.Azure.Common", 
-    "Microsoft.Azure.ServiceBus", 
-    "Newtonsoft.Json", 
-    "Polly", 
+    "Microsoft.Azure.Common",
+    "Microsoft.Azure.ServiceBus",
+    "Newtonsoft.Json",
+    "Polly",
     "System.Buffers",
     "System.Diagnostics.DiagnosticSource",
     "System.Memory",
