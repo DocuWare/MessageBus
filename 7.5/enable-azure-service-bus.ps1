@@ -14,16 +14,17 @@ param(
 
 
 $files = @( 
-    "C:\Program Files\DocuWare\Web\Platform\web.config",
-    "C:\Program Files\DocuWare\Web\Settings\web.config",
-    "C:\Program Files\DocuWare\Web\Processes\web.config",
-    "C:\Program Files\DocuWare\Web\FormsService\web.config",
-    "C:\Program Files\DocuWare\Web\SearchService\web.config",
     "C:\Program Files\DocuWare\Background Process Service\DocuWare.BackgroundProcessService.exe.config",
-    "C:\Program Files\DocuWare\Background Process Service\DocuWare.BackgroundProcessService.GenericProcess.exe.config",
     "C:\Program Files\DocuWare\Background Process Service\DocuWare.BackgroundProcessService.LongLiving.GenericProcess.exe.config",
     "C:\Program Files\DocuWare\Background Process Service\DocuWare.BackgroundProcessService.LongLiving.GenericProcess.x86.exe.config",
+    "C:\Program Files\DocuWare\Web\DocCap\Web.config",
+    "C:\Program Files\DocuWare\Web\FormsService\Web.config",
+    "C:\Program Files\DocuWare\Web\Platform\Web.config",
+    "C:\Program Files\DocuWare\Web\Processes\Web.config",
+    "C:\Program Files\DocuWare\Web\SearchService\Web.config",
+    "C:\Program Files\DocuWare\Web\Settings\Web.config",
     "C:\Program Files (x86)\DocuWare\Authentication Server\DWAuthenticationServer.exe.config",
+    "C:\Program Files (x86)\DocuWare\Setup Components\Templating\DocuWare.Templating.Console.exe.config",
     "C:\Program Files (x86)\DocuWare\Workflow Server\DWWorkflowServer.exe.config"
 )
 
