@@ -3,7 +3,7 @@ param(
     [string] $connectionString
 )
 
-[Reflection.Assembly]::LoadWithPartialName("System.Xml.Linq") | Out-Null
+[System.Reflection.Assembly]::LoadWithPartialName("System.Xml.Linq") | Out-Null
 
 [System.Xml.Linq.Xname] $rt = [System.Xml.Linq.Xname]::Get("runtime")
 [System.Xml.Linq.Xname] $ab = [System.Xml.Linq.Xname]::Get("assemblyBinding", "urn:schemas-microsoft-com:asm.v1")
@@ -37,13 +37,7 @@ foreach ($possibleConfigFile in $possibleConfigFiles) {
 [string] $providers = "<Providers>
 <add name='az' type='DocuWare.MessageBus.Azure.Provider.HyperBus, DocuWare.MessageBus.Azure.Provider' customConfigurationType='DocuWare.MessageBus.Azure.Provider.HyperBusConfiguration, DocuWare.MessageBus.Azure.Provider' connectionString='$connectionString' />
 </Providers>"
-
-$filesToCheck = @(
-    "System.Memory.dll",
-    "System.Runtime.CompilerServices.Unsafe.dll",
-    "System.Diagnostics.DiagnosticSource.dll",
-    "Newtonsoft.Json.dll"
-)
+$startingAssembly = "DocuWare.MessageBus.Azure.Provider.dll"
 
 foreach ($file in $files) {
     $backupFile = "$($file).$((Get-Date).ToString("yyyyMMddHHmmss"))";
@@ -58,60 +52,112 @@ foreach ($file in $files) {
         $h.Add([System.Xml.Linq.XElement]::Parse($providers));
     }
 
-    foreach ($assemblyFileName in $filesToCheck) {
-        foreach ($assemblyFilePart in @($assemblyFileName, "bin\$assemblyFileName")) {
-            $assemblyFile = Join-Path (Split-Path $file) $assemblyFilePart
-            #Write-Host $assemblyFile
-            if (Test-Path $assemblyFile -PathType Leaf) {
-                $asm = [System.Reflection.Assembly]::LoadFile($assemblyFile)
-                #Write-Host $asm.FullName
-                $isMatch = $asm.FullName -match '^(.+), Version=(.+), Culture=(.+), PublicKeyToken=(.+)$'
-                $myMatches = $Matches;
+    $baseDir = Split-Path -Path $file
+    $startingAssemblyFile = Join-Path $baseDir $startingAssembly
+    if (-not (Test-Path $startingAssemblyFile -PathType Leaf)) {
+        $baseDir = Join-Path $baseDir "bin"
+        $startingAssemblyFile = Join-Path $baseDir $startingAssembly
+        if (-not (Test-Path $startingAssemblyFile -PathType Leaf)) {
+            continue
+        }
+    }
+    $assembliesToCheck = @($startingAssembly)
+    $checkedAssemblies = @()
+    $foundAssemblies = @()
+    $neededAssemblyFullNames = @()
+    $foundAssemblyFullNames = @()
 
-                $runtime = $xDoc.Root.Element($rt);
-                if (-not $runtime) {
-                    $runtime = New-Object System.Xml.Linq.XElement $rt
-                    $xDoc.Root.Add($runtime);
-                }
+    while ($assembliesToCheck.Count -gt 0) {
+        $assemblyToCheck = $assembliesToCheck[0]
+        $checkedAssemblies += $assemblyToCheck
+        $assembliesToCheck = $assembliesToCheck[1..$assembliesToCheck.Length]
 
-                $assemblyBindings = $runtime.Element($ab);
-                if (!$assemblyBindings) {
-                    $assemblyBindings = New-Object System.Xml.Linq.XElement $ab
-                    $runtime.Add($assemblyBindings);
-                }
+        $assemblyFileToCheck = Join-Path $baseDir $assemblyToCheck
+        if (-not (Test-Path $assemblyFileToCheck)) {
+            continue
+        }
 
-                $bindingRedirect = $null;
-                foreach ($daElement in $assemblyBindings.Elements($da)) {
-                    $aiElement = $daElement.Element($ai);
-                    if ($aiElement -and $aiElement.Attribute("name").Value -eq $myMatches[1]) {
-                        $bindingRedirect = $daElement.Element($br);
-                        break;
-                    }
-                }
-
-                $newVersion = $myMatches[2];
-
-                if (-not $bindingRedirect) {
-                    $daElement = New-Object System.Xml.Linq.XElement $da
-                    $assemblyBindings.Add($daElement)
-
-                    $aiElement = New-Object System.Xml.Linq.XElement $ai
-                    $aiElement.SetAttributeValue("name", $myMatches[1]);
-                    $aiElement.SetAttributeValue("publicKeyToken", $myMatches[4]);
-                    $aiElement.SetAttributeValue("culture", $myMatches[3]);
-
-                    $daElement.Add($aiElement);
-
-                    $bindingRedirect = New-Object System.Xml.Linq.XElement $br
-                    $daElement.Add($bindingRedirect);
-                }
-
-                $bindingRedirect.SetAttributeValue("oldVersion", "0.0.0.0-255.255.255.255");
-                $bindingRedirect.SetAttributeValue("newVersion", $newVersion);
-
-                # Write-Host $bindingRedirect.Parent
+        [System.Reflection.Assembly] $assemblyObject = [System.Reflection.Assembly]::LoadFile($assemblyFileToCheck)
+        [System.Reflection.AssemblyName] $assemblyName = $assemblyObject.GetName()
+        [System.Reflection.AssemblyName[]] $referencedAssemblyNames = $assemblyObject.GetReferencedAssemblies()
+        $foundAssemblies += $assemblyName.Name
+        $foundAssemblyFullNames += $assemblyName.FullName
+        foreach ($referencedAssemblyName in $referencedAssemblyNames) {
+            $referencedAssembly = $referencedAssemblyName.Name + ".dll"
+            if (($checkedAssemblies -notcontains $referencedAssembly) -and ($assembliesToCheck -notcontains $referencedAssembly)) {
+                $assembliesToCheck += $referencedAssembly
+            }
+            if ($neededAssemblyFullNames -notcontains $referencedAssemblyName.FullName) {
+                $neededAssemblyFullNames += $referencedAssemblyName.FullName
             }
         }
+    }
+
+    $assembliesToFix = @()
+
+    for ($index = 0; $index -lt $foundAssemblies.Count; ++$index) {
+        $foundAssembly = $foundAssemblies[$index]
+        $foundAssemblyFullName = $foundAssemblyFullNames[$index]
+        $tempArrayOrString = ($neededAssemblyFullNames | Where-Object { $_ -like ($foundAssembly + ",*") })
+        if ($tempArrayOrString.Count -lt 1) {
+            continue
+        }
+        if ($tempArrayOrString.Count -gt 1) {
+            $assembliesToFix += $foundAssemblyFullName
+            continue
+        }
+        if ($tempArrayOrString -ne $foundAssemblyFullName) {
+            $assembliesToFix += $foundAssemblyFullName
+        }
+    }
+
+    foreach ($assemblyToFix in $assembliesToFix) {
+        #Write-Host $assemblyToFix
+        $isMatch = $assemblyToFix -match '^(.+), Version=(.+), Culture=(.+), PublicKeyToken=(.+)$'
+        $myMatches = $Matches;
+
+        $runtime = $xDoc.Root.Element($rt);
+        if (-not $runtime) {
+            $runtime = New-Object System.Xml.Linq.XElement $rt
+            $xDoc.Root.Add($runtime);
+        }
+
+        $assemblyBindings = $runtime.Element($ab);
+        if (!$assemblyBindings) {
+            $assemblyBindings = New-Object System.Xml.Linq.XElement $ab
+            $runtime.Add($assemblyBindings);
+        }
+
+        $bindingRedirect = $null;
+        foreach ($daElement in $assemblyBindings.Elements($da)) {
+            $aiElement = $daElement.Element($ai);
+            if ($aiElement -and $aiElement.Attribute("name").Value -eq $myMatches[1]) {
+                $bindingRedirect = $daElement.Element($br);
+                break;
+            }
+        }
+
+        $newVersion = $myMatches[2];
+
+        if (-not $bindingRedirect) {
+            $daElement = New-Object System.Xml.Linq.XElement $da
+            $assemblyBindings.Add($daElement)
+
+            $aiElement = New-Object System.Xml.Linq.XElement $ai
+            $aiElement.SetAttributeValue("name", $myMatches[1]);
+            $aiElement.SetAttributeValue("publicKeyToken", $myMatches[4]);
+            $aiElement.SetAttributeValue("culture", $myMatches[3]);
+
+            $daElement.Add($aiElement);
+
+            $bindingRedirect = New-Object System.Xml.Linq.XElement $br
+            $daElement.Add($bindingRedirect);
+        }
+
+        $bindingRedirect.SetAttributeValue("oldVersion", "0.0.0.0-255.255.255.255");
+        $bindingRedirect.SetAttributeValue("newVersion", $newVersion);
+
+        # Write-Host $bindingRedirect.Parent
     }
 
     $xDoc.Save("$file");
