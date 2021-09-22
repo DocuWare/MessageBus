@@ -11,22 +11,28 @@ param(
 [System.Xml.Linq.Xname] $ai = [System.Xml.Linq.Xname]::Get("assemblyIdentity", "urn:schemas-microsoft-com:asm.v1")
 [System.Xml.Linq.Xname] $br = [System.Xml.Linq.Xname]::Get("bindingRedirect", "urn:schemas-microsoft-com:asm.v1")
 
+$possibleConfigFiles = Get-ChildItem -Path "C:\*\DocuWare\*\*.config" -Recurse -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName }
 
+$files = @()
 
-$files = @( 
-    "C:\Program Files\DocuWare\Background Process Service\DocuWare.BackgroundProcessService.exe.config",
-    "C:\Program Files\DocuWare\Background Process Service\DocuWare.BackgroundProcessService.LongLiving.GenericProcess.exe.config",
-    "C:\Program Files\DocuWare\Background Process Service\DocuWare.BackgroundProcessService.LongLiving.GenericProcess.x86.exe.config",
-    "C:\Program Files\DocuWare\Web\DocCap\Web.config",
-    "C:\Program Files\DocuWare\Web\FormsService\Web.config",
-    "C:\Program Files\DocuWare\Web\Platform\Web.config",
-    "C:\Program Files\DocuWare\Web\Processes\Web.config",
-    "C:\Program Files\DocuWare\Web\SearchService\Web.config",
-    "C:\Program Files\DocuWare\Web\Settings\Web.config",
-    "C:\Program Files (x86)\DocuWare\Authentication Server\DWAuthenticationServer.exe.config",
-    "C:\Program Files (x86)\DocuWare\Setup Components\Templating\DocuWare.Templating.Console.exe.config",
-    "C:\Program Files (x86)\DocuWare\Workflow Server\DWWorkflowServer.exe.config"
-)
+foreach ($possibleConfigFile in $possibleConfigFiles) {
+    if (-not (Select-String -Path $possibleConfigFile -Pattern "HyperBusFactory")) {
+        continue
+    }
+    [System.Xml.Linq.XDocument] $xDocument = [System.Xml.Linq.XDocument]::Load($possibleConfigFile)
+    if (-not $xDocument) {
+        continue
+    }
+    [System.Xml.Linq.XElement] $xElement = $xDocument.Root.Element("HyperBusFactory")
+    if (-not $xElement) {
+        continue
+    }
+    [System.Xml.Linq.XAttribute] $xAttribute = $xElement.Attribute("selectedProvider")
+    if ((-not $xAttribute) -or ($xAttribute.Value -ne "MSMQ")) {
+        continue
+    }
+    $files += $possibleConfigFile
+}
 
 [string] $providers = "<Providers>
 <add name='az' type='DocuWare.MessageBus.Azure.Provider.HyperBus, DocuWare.MessageBus.Azure.Provider' customConfigurationType='DocuWare.MessageBus.Azure.Provider.HyperBusConfiguration, DocuWare.MessageBus.Azure.Provider' connectionString='$connectionString' />
