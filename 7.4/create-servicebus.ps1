@@ -1,4 +1,4 @@
-# This script needs the Azue CLI tool installed.
+# This script needs the Azure CLI tool installed.
 # Get it from https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest
 
 
