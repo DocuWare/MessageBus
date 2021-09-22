@@ -5,7 +5,7 @@ We provide a script, which does the configuration.
 
 > *WARNING* This is the installation instruction for DocuWare 7.5. Do not apply this on other versions of DocuWare.
 
-Please follow the steps in order to connect your DocuWare installation with Azure Service Bus:
+Please follow the steps in order to connect your DocuWare installation with Azure Service Bus.
 
 ## Create an Azure Service Bus namespace and get an access key
 
@@ -16,7 +16,7 @@ features which DocuWare needs.
 
 If the Azure Service Bus is created, go to the Azure portal and create a shared access policy key. Choose a name like _docuware_ and give the rights _Manage_, _Send_ and _Listen_.
 
-When the key is created, open it in the Portal and copy either the __Primary Connection String__ or the __Secondary Connection String__ string to the clipboard.
+When the key is created, open it in the Portal and copy the value of either __Primary Connection String__ or the __Secondary Connection String__ to the clipboard.
 
 ### Option 2: Use Azure CLI
 
@@ -24,15 +24,21 @@ You can use the Azure CLI to create the Azure Service Bus instance automatically
 without the Azure Portal. If you do not have Azure CLI installed,
 get it from [here](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-windows).
 
-We provide a [script](./create-servicebus.ps1), which does all the necessary steps for you. Open the script in an editor and change the parameters according to your setup.
-Then execute the following steps in either Powershell or Powershell Core:
+We provide a [script](./create-servicebus.ps1), which does all the necessary steps for you. Just execute the script in either Powershell or Powershell Core:
 
 ```powershell
 az login # Only needed if you are not logged in yet
 .\create-servicebus.ps1
 ```
+This script uses default values for its parameters. Open the script in an editor and check whether the default parameters match to your setup. If not, you will have to define your own values. At least the subscription name will probably have to be defined. If you need different values, use the script like this:
 
-The script returns both the primary and secondary connection string.
+
+```powershell
+az login # Only needed if you are not logged in yet
+.\create-servicebus.ps1 -subscription "My subscription name"
+```
+
+The script returns both the primary and secondary connection string. You can see them next to words __primaryConnectionString__ and __secondaryConnectionString__.
 
 ## Connect DocuWare with the Azure Service Bus
 
