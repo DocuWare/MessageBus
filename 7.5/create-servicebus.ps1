@@ -23,22 +23,40 @@ param(
     [string] $sharedAccessKeyName = "docuware"
 )
 
-$capture = (az account set --subscription $subscription)
-
-[bool] $doesResourceGroupExist = [System.Boolean]::Parse($(az group exists --name $rg))
-if(!$doesResourceGroupExist)
-{
-    $capture = (az group create --name $rg --location $location)
+az account set --subscription $subscription
+$currentSubscription = az account show | ConvertFrom-Json
+if ((-not $currentSubscription) -or ($currentSubscription.name -ne $subscription)) {
+    Write-Error "You are not logged in or your subscription name is wrong"
+    return
 }
 
-
-[bool] $nsAvailable = [System.Boolean]::Parse($(az servicebus namespace exists --name $namespace --query nameAvailable))
-if($nsAvailable)
-{
-    $capture = (az servicebus namespace create --resource-group $rg --name $namespace --sku $serviceBusSku)
+[bool] $resourceGroupExists = [System.Boolean]::Parse($(az group exists --name $rg))
+if (!$resourceGroupExists) {
+    $createdResourceGroup = (az group create --name $rg --location $location)
+    if (-not $createdResourceGroup) {
+        Write-Error "Location or resource group name is wrong"
+        return
+    }
 }
 
-$capture = (az servicebus namespace authorization-rule create --resource-group $rg --namespace-name $namespace --name $sharedAccessKeyName --rights Manage Send Listen)
-$keys = (az servicebus namespace authorization-rule keys list --resource-group $rg --namespace-name $namespace --name $sharedAccessKeyName -o json)
+[bool] $namespaceAvailable = [System.Boolean]::Parse($(az servicebus namespace exists --name $namespace --query nameAvailable))
+if (!$namespaceAvailable) {
+    Write-Error "Service bus namespace is wrong"
+    return
+}
 
-ConvertFrom-Json ($keys | Out-String)
+$serviceBus = az servicebus namespace create --resource-group $rg --name $namespace --sku $serviceBusSku
+if (-not $serviceBus) {
+    Write-Error "Service bus SKU is wrong"
+    return
+}
+
+$createdRule = az servicebus namespace authorization-rule create --resource-group $rg --namespace-name $namespace --name $sharedAccessKeyName --rights Manage Send Listen
+if (-not $createdRule) {
+    Write-Error "Shared access key name is wrong"
+    return
+}
+
+$keys = az servicebus namespace authorization-rule keys list --resource-group $rg --namespace-name $namespace --name $sharedAccessKeyName | ConvertFrom-Json
+Write-Host ("primaryConnectionString: " + $keys.primaryConnectionString)
+Write-Host ("secondaryConnectionString: " + $keys.secondaryConnectionString)
