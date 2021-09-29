@@ -14,7 +14,7 @@ param(
 
 
 $files = @( 
-    "C:\Program Files\DocuWare\Web\Platform\web.config"
+    "C:\Program Files\DocuWare\Web\Platform\web.config",
     "C:\Program Files\DocuWare\Web\Settings\web.config",
     "C:\Program Files\DocuWare\Web\Processes\web.config",
     "C:\Program Files\DocuWare\Web\FormsService\web.config",
@@ -32,7 +32,7 @@ $files = @(
 </Providers>"
 
 $filesToCheck = @(
-    "System.Memory.dll"
+    "System.Memory.dll",
     "System.Runtime.CompilerServices.Unsafe.dll",
     "System.Diagnostics.DiagnosticSource.dll",
     "Newtonsoft.Json.dll"
