@@ -28,7 +28,7 @@ foreach ($possibleConfigFile in $possibleConfigFiles) {
         continue
     }
     [System.Xml.Linq.XAttribute] $xAttribute = $xElement.Attribute("selectedProvider")
-    if ((-not $xAttribute) -or ($xAttribute.Value -ne "MSMQ")) {
+    if (-not $xAttribute) {
         continue
     }
     $files += $possibleConfigFile
