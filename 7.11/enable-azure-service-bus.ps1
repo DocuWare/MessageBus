@@ -39,6 +39,9 @@ $possibleConfigFiles = Get-ChildItem -Path "C:\*\DocuWare\*\*.config" -Recurse -
 $files = @()
 
 foreach ($possibleConfigFile in $possibleConfigFiles) {
+    if($possibleConfigFile.Contains("Setup Components", "OrdinalIgnoreCase")){
+        continue
+    }
     if (-not (Select-String -Path $possibleConfigFile -Pattern "HyperBusFactory")) {
         continue
     }
