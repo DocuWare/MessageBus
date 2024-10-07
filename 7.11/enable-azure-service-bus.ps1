@@ -3,6 +3,29 @@ param(
     [string] $connectionString
 )
 
+
+$possibleJsonConfigFiles = Get-ChildItem -Path "C:\*\DocuWare\*\appsettings.json" -Recurse -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName }
+foreach ($jsonConfigFile in $possibleJsonConfigFiles) {
+    if (-not (Select-String -Path $jsonConfigFile -Pattern "MessageBusConfigurationType")) {
+        continue
+    }
+
+    $backupFile = "$($jsonConfigFile).$((Get-Date).ToString("yyyyMMddHHmmss"))";
+    Write-Host "Backup '$jsonConfigFile' -> '$backupFile'"
+    Copy-Item $jsonConfigFile $backupFile
+
+
+    $config = Get-Content -Path $jsonConfigFile | ConvertFrom-Json
+    $config.MessageBus = @{
+        MessageBusType              = "DocuWare.MessageBus.Azure.Provider.HyperBus, DocuWare.MessageBus.Azure.Provider"
+        MessageBusConfigurationType = "DocuWare.MessageBus.Azure.Provider.HyperBusConfiguration, DocuWare.MessageBus.Azure.Provider"
+        ConnectionString            = $connectionString
+    }
+    
+    [string] $s = ConvertTo-Json $config -Depth 100
+    $s | Out-File -FilePath $jsonConfigFile -Force
+}
+
 [System.Reflection.Assembly]::LoadWithPartialName("System.Xml.Linq") | Out-Null
 
 [System.Xml.Linq.Xname] $rt = [System.Xml.Linq.Xname]::Get("runtime")
@@ -16,6 +39,9 @@ $possibleConfigFiles = Get-ChildItem -Path "C:\*\DocuWare\*\*.config" -Recurse -
 $files = @()
 
 foreach ($possibleConfigFile in $possibleConfigFiles) {
+    if($possibleConfigFile.Contains("Setup Components", "OrdinalIgnoreCase")){
+        continue
+    }
     if (-not (Select-String -Path $possibleConfigFile -Pattern "HyperBusFactory")) {
         continue
     }
@@ -39,6 +65,8 @@ foreach ($possibleConfigFile in $possibleConfigFiles) {
 </Providers>"
 $startingAssembly = "DocuWare.MessageBus.Azure.Provider.dll"
 
+$errorFiles = @()
+
 foreach ($file in $files) {
     $backupFile = "$($file).$((Get-Date).ToString("yyyyMMddHHmmss"))";
     Write-Host "Backup '$file' -> '$backupFile'"
@@ -58,6 +86,7 @@ foreach ($file in $files) {
         $baseDir = Join-Path $baseDir "bin"
         $startingAssemblyFile = Join-Path $baseDir $startingAssembly
         if (-not (Test-Path $startingAssemblyFile -PathType Leaf)) {
+            $errorFiles += $file;
             continue
         }
     }
@@ -156,9 +185,12 @@ foreach ($file in $files) {
 
         $bindingRedirect.SetAttributeValue("oldVersion", "0.0.0.0-255.255.255.255");
         $bindingRedirect.SetAttributeValue("newVersion", $newVersion);
-
-        # Write-Host $bindingRedirect.Parent
     }
 
     $xDoc.Save("$file");
+}
+
+if ($errorFiles.Count -gt 0) {
+    $errorFileList = [string]::Join( "`n`t", $errorFiles)
+    Write-Error "The following configuration files are not changed, because the $startingAssembly files are missing: `n`t$errorFileList"
 }
