@@ -10,20 +10,32 @@ foreach ($jsonConfigFile in $possibleJsonConfigFiles) {
         continue
     }
 
+    $config = Get-Content -Path $jsonConfigFile | ConvertFrom-Json
+    if (-not ($config.MessageBus -or $config.messaging )) {
+        Write-Host "🚫 Skip '$jsonConfigFile' because it does not contain MessageBus configuration"
+        continue
+    }
+
     $backupFile = "$($jsonConfigFile).$((Get-Date).ToString("yyyyMMddHHmmss"))";
-    Write-Host "Backup '$jsonConfigFile' -> '$backupFile'"
+    Write-Host "💾 Backup '$jsonConfigFile' -> '$backupFile'"
     Copy-Item $jsonConfigFile $backupFile
 
-
-    $config = Get-Content -Path $jsonConfigFile | ConvertFrom-Json
-    $config.MessageBus = @{
+    $configSection = @{
         MessageBusType              = "DocuWare.MessageBus.Azure.Provider.HyperBus, DocuWare.MessageBus.Azure.Provider"
         MessageBusConfigurationType = "DocuWare.MessageBus.Azure.Provider.HyperBusConfiguration, DocuWare.MessageBus.Azure.Provider"
         ConnectionString            = $connectionString
     }
+
+    if ($config.MessageBus) {
+        $config.MessageBus = $configSection;
+    }
+    elseif ($config.messaging) {
+        $config.messaging = $configSection;
+    }
     
     [string] $s = ConvertTo-Json $config -Depth 100
     $s | Out-File -FilePath $jsonConfigFile -Force
+    Write-Host "✅ Updated '$jsonConfigFile'"
 }
 
 [System.Reflection.Assembly]::LoadWithPartialName("System.Xml.Linq") | Out-Null
@@ -39,7 +51,7 @@ $possibleConfigFiles = Get-ChildItem -Path "C:\*\DocuWare\*\*.config" -Recurse -
 $files = @()
 
 foreach ($possibleConfigFile in $possibleConfigFiles) {
-    if($possibleConfigFile.Contains("Setup Components", "OrdinalIgnoreCase")){
+    if ($possibleConfigFile -like "*Setup Components*") {
         continue
     }
     if (-not (Select-String -Path $possibleConfigFile -Pattern "HyperBusFactory")) {
@@ -69,7 +81,7 @@ $errorFiles = @()
 
 foreach ($file in $files) {
     $backupFile = "$($file).$((Get-Date).ToString("yyyyMMddHHmmss"))";
-    Write-Host "Backup '$file' -> '$backupFile'"
+    Write-Host "💾 Backup '$file' -> '$backupFile'"
     Copy-Item $file $backupFile
     [System.Xml.Linq.XDocument] $xDoc = [System.Xml.Linq.XDocument]::Load($file)
 
@@ -188,6 +200,7 @@ foreach ($file in $files) {
     }
 
     $xDoc.Save("$file");
+    Write-Host "✅ Updated '$file'"
 }
 
 if ($errorFiles.Count -gt 0) {
